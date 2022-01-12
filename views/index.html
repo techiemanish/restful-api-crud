@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<title>Hello HTML</title>
+		<link rel="stylesheet" href="/public/style.css">
+	</head>
+	<body>
+		<h1>REST CRUD</h1>
+    <p>New Employee Registration</p>
+     <form action="/employees" method="post">
+      <label>Employee Id :</label>
+      <input type="number" name="employee_id" value=""><br>
+      <label>Employee Name :</label>
+      <input type="text" name="employee_name" value=""><br>
+      <label>Employee Salary :</label>
+      <input type="number" name="employee_salary" value=""><br>
+      <label>Employee Age :</label>
+      <input type="number" name="employee_age" value=""><br><br>
+      <input type="submit" value="Submit">
+    </form>
+    <hr>
+    <a href= "/employees">Get Request to /employees</a>
+    <br/>
+    <hr>
+    <p>Find Employee by id</p>
+    <form action="/employees/:id" method="get">
+      <label>Employee Id :</label>
+      <input type="number" name="employee_id" value=""><br>
+      <input type="submit" value="Submit">
+    </form>
+    <hr>
+    <a href="/employees/1000">Test request for the id 1000</a>
+	</body>
+
+</html>

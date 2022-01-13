@@ -1,9 +1,11 @@
+// @Author : techiemanish
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 console.log("Hello World");
 let resources = __dirname + "/public";
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
 
 let Handler = (req, res) => {
   let absolutePath = __dirname + "/views/index.html";
@@ -71,16 +73,6 @@ app.get('/employees', (req, res) => {
   });
 });
 
-//Delete API request by id on the api call
-app.delete('/employees/:id', function(req, res){
-  let val = req.params.id;
-  db.collection('employees').deleteOne({employee_id : val},function(err, obj){
-    if(err) return console.log(err);
-    console.log("1 record deleted");
-  })
-  res.json({test: req.params.id});
-});
-
 //To find a employee by id on the api call
 app.get('/employees/:id', function(req, res){
   let val = req.params.id;
@@ -102,3 +94,42 @@ app.get('/employees/:id', function(req, res){
     
   });
 });
+
+//Put API request by id
+app.put('/employees/:id', function(req, res){
+  let val = req.params.id;
+  db.collection('employees').updateOne({employee_id : val},
+  {$set: 
+    {employee_id : req.body.employee_id,
+    employee_name : req.body.employee_name,
+    employee_salary : req.body.employee_salary,
+    employee_age : req.body.employee_age
+    }
+  },{upsert: true},function(err){
+    if(err){
+      return console.log(err);
+    }
+    console.log("Put request on this employee id " + val + " has been completed.");
+  });
+  res.json({
+    employee_id: req.body.employee_id,
+    employee_name : req.body.employee_name,
+    employee_salary : req.body.employee_salary,
+    employee_age : req.body.employee_age,
+    message : "1 record has been updated."
+  });
+})
+
+//Delete API request by id on the api call
+app.delete('/employees/:id', function(req, res){
+  let val = req.params.id;
+  db.collection('employees').deleteOne({employee_id : val},function(err, obj){
+    if(err) return console.log(err);
+    console.log("1 record deleted");
+  })
+  res.json({
+    employee_id: req.params.id,
+    message : "1 record has been deleted"
+  });
+});
+

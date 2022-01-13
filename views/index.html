@@ -7,7 +7,8 @@
 		<link rel="stylesheet" href="/public/style.css">
 	</head>
 	<body>
-		<h1>REST CRUD</h1>
+		<h2>RESTful API CRUD Operation</h2>
+    <hr>
     <p>New Employee Registration</p>
      <form action="/employees" method="post">
       <label>Employee Id :</label>
@@ -23,15 +24,43 @@
     <hr>
     <a href= "/employees">Get Request to /employees</a>
     <br/>
-    <hr>
-    <p>Find Employee by id</p>
-    <form action="/employees/:id" method="get">
-      <label>Employee Id :</label>
-      <input type="number" name="employee_id" value=""><br>
-      <input type="submit" value="Submit">
-    </form>
-    <hr>
-    <a href="/employees/1000">Test request for the id 1000</a>
+<hr>
+<p>This is RESTful API with CRUD operation:<br>
+Techonology used: MonogoDB, Express.js, Node.js, AWS<br>
+API Endpoint: /employees<br></p>
+1. For Get request to API: [Request type = GET]<br>
+https://restful-api-crud.techiemanish.repl.co/employees
+<br><br>OR<br><br>
+To find the particular employee with id:<br>
+https://restful-api-crud.techiemanish.repl.co/employees/id<br>
+<br>
+2. For Post request to API: [Request type = POST]<br>
+Body for the request while sending the request: For example:<br>
+https://restful-api-crud.techiemanish.repl.co/employees<br>
+<pre>{
+    employee_id : "1100",
+    employee_name : "Manish Tiwari",
+    employee_salary : "750000",
+    employee_age : "22"
+}</pre>
+OR<br>
+Use the above New Employee Registration and submit the Form<br>
+<br>
+3. For PUT request to API: [Request type = PUT]<br>
+https://restful-api-crud.techiemanish.repl.co/employees/id<br>
+Body for the request while sending the request: For example:<br>
+<pre>{
+    employee_id : "1100",
+    employee_name : "Manish Tiwari",
+    employee_salary : "750000",
+    employee_age : "22"
+}</pre>
+
+4. For Delete request to API: [Request type = Delete]<br>
+https://restful-api-crud.techiemanish.repl.co/employees/id<br>
+
+
 	</body>
 
 </html>
+

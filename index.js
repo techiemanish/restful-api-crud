@@ -3,7 +3,7 @@ var express = require('express');
 require('dotenv').config();
 var app = express();
 var bodyParser = require('body-parser');
-console.log("Hello World");
+
 let resources = __dirname + "/public";
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
@@ -17,7 +17,8 @@ app.get("/", Handler);
 app.use("/public", express.static(resources));
 
 app.listen(3000, () => {
-  console.log('server started');
+  console.log('Server started');
+  console.log('Application is live now');
 });
 
 var mongoose = require('mongoose');

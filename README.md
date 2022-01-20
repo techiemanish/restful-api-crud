@@ -7,6 +7,10 @@ API Endpoint: /employees<br>
 
 Project Live Link: https://replit.com/@techiemanish/restful-api-crud<br>
 
+Docker image: https://hub.docker.com/r/techiemanish/restful-api-crud<br>
+
+<code><b>docker pull techiemanish/restful-api-crud</b></code>
+
 <b>Before sending any request to the api, first click on the above link and run the project on live envoirnment, then feel free to test this RESTful API.<b><hr>
 
 1. For Get request to API: [Request type = GET]<br>

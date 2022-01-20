@@ -1,5 +1,6 @@
 // @Author : techiemanish
 var express = require('express');
+require('dotenv').config();
 var app = express();
 var bodyParser = require('body-parser');
 console.log("Hello World");

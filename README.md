@@ -7,9 +7,17 @@ API Endpoint: /employees<br>
 
 Project Live Link: https://replit.com/@techiemanish/restful-api-crud<br>
 
-Docker image: https://hub.docker.com/r/techiemanish/restful-api-crud<br>
+Application Source Code: https://github.com/techiemanish/restful-api-crud<br>
 
-<code><b>docker pull techiemanish/restful-api-crud</b></code>
+Docker image: https://hub.docker.com/r/techiemanish/restful-api-crud<br>
+<b>Container Port: 3000</b>
+
+<code>
+<b>docker pull techiemanish/restful-api-crud</b><br></code>
+<code>
+<b>docker run -it -p 5000:3000 --name myapp techiemanish/restful-api-crud</b>
+</code>
+<br>
 
 <b>Before sending any request to the api, first click on the above link and run the project on live envoirnment, then feel free to test this RESTful API.<b><hr>
 

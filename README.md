@@ -13,7 +13,8 @@ Docker image: https://hub.docker.com/r/techiemanish/restful-api-crud<br>
 <b>Container Port: 3000</b>
 
 <code>
-<b>docker pull techiemanish/restful-api-crud</b><br></code>
+<b>docker pull techiemanish/restful-api-crud</b></code>
+<br>
 <code>
 <b>docker run -it -p 5000:3000 --name myapp techiemanish/restful-api-crud</b>
 </code>

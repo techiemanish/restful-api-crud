@@ -1,44 +1,49 @@
-// @Author : techiemanish (Optimized Version)
+// @Author : techiemanish (Fixed + Safe Version)
 
-const express = require('express');
+var express = require('express');
 require('dotenv').config();
-const mongoose = require('mongoose');
-const path = require('path');
-const fetch = require('node-fetch');
+var app = express();
+var bodyParser = require('body-parser');
 
-const app = express();
-
-// Middleware
+let resources = __dirname + "/public";
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
-// Static files
-app.use("/public", express.static(path.join(__dirname, "public")));
+let Handler = (req, res) => {
+  let absolutePath = __dirname + "/views/index.html";
+  res.sendFile(absolutePath);
+};
+app.get("/", Handler);
 
-// Home route
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "views/index.html"));
-});
+app.use("/public", express.static(resources));
 
-// ================= DB CONNECTION =================
+
+var mongoose = require('mongoose');
+
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
-})
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log("DB Error:", err));
+});
 
-// ================= SCHEMA =================
-const employeeSchema = new mongoose.Schema({
+var db = mongoose.connection;
+
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function () {
+  console.log("MongoDB connected");
+});
+
+const Schema = mongoose.Schema;
+
+const employeeSchema = new Schema({
   employee_id: {
     type: String,
-    required: [true, "Employee ID is required"],
+    required: true,
     unique: true,
     trim: true
   },
   employee_name: {
     type: String,
-    required: [true, "Employee name is required"],
+    required: true,
     trim: true,
     validate: {
       validator: v => isNaN(v),
@@ -48,44 +53,38 @@ const employeeSchema = new mongoose.Schema({
   employee_salary: {
     type: Number,
     required: true,
-    min: [1000, "Salary too low"],
-    max: [10000000, "Salary too high"]
+    min: 1000,
+    max: 10000000
   },
   employee_age: {
     type: Number,
     required: true,
-    min: [18, "Minimum age is 18"],
-    max: [65, "Maximum age is 65"]
+    min: 18,
+    max: 65
   }
-}, { timestamps: true });
+});
 
-const Employee = mongoose.model('Employee', employeeSchema);
+let Employee = mongoose.model('Employee', employeeSchema);
 
-// ================= API ROUTES =================
+// ================= API ENDPOINTS =================
 
 // CREATE
-app.post("/employees", async (req, res) => {
+app.post("/employees", async function(req, res){
   try {
-    const employee = new Employee(req.body);
-    const saved = await employee.save();
+    const emp = new Employee(req.body);
+    const saved = await emp.save();
 
-    res.status(201).json({
-      success: true,
-      data: saved
-    });
+    res.status(201).json(saved);
 
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      error: err.message
-    });
+    res.status(400).json({ error: err.message });
   }
 });
 
 // READ ALL
-app.get("/employees", async (req, res) => {
+app.get('/employees', async (req, res) => {
   try {
-    const employees = await Employee.find({}, {
+    const result = await Employee.find({}, {
       _id: 0,
       employee_id: 1,
       employee_name: 1,
@@ -93,104 +92,79 @@ app.get("/employees", async (req, res) => {
       employee_age: 1
     });
 
-    res.json({
-      count: employees.length,
-      data: employees
-    });
+    res.json(result);
 
   } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // READ BY ID
-app.get("/employees/:id", async (req, res) => {
+app.get('/employees/:id', async function(req, res){
   try {
-    const emp = await Employee.findOne(
-      { employee_id: req.params.id },
+    let val = req.params.id;
+
+    let result = await Employee.findOne(
+      { employee_id: val },
       { _id: 0 }
     );
 
-    if (!emp) {
-      return res.status(404).json({
-        message: "Employee not found"
-      });
+    if(!result){
+      return res.status(404).json("No employee found with id " + val);
     }
 
-    res.json(emp);
+    res.json(result);
 
   } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // UPDATE
-app.put("/employees/:id", async (req, res) => {
+app.put('/employees/:id', async function(req, res){
   try {
-    const updated = await Employee.findOneAndUpdate(
-      { employee_id: req.params.id },
+    let val = req.params.id;
+
+    let updated = await Employee.findOneAndUpdate(
+      { employee_id: val },
       req.body,
       { new: true, runValidators: true }
     );
 
-    if (!updated) {
-      return res.status(404).json({
-        message: "Employee not found"
-      });
+    if(!updated){
+      return res.status(404).json("No employee found with id " + val);
     }
 
-    res.json({
-      success: true,
-      data: updated
-    });
+    res.json(updated);
 
   } catch (err) {
-    res.status(400).json({
-      error: err.message
-    });
+    res.status(400).json({ error: err.message });
   }
 });
 
 // DELETE
-app.delete("/employees/:id", async (req, res) => {
+app.delete('/employees/:id', async function(req, res){
   try {
-    const result = await Employee.deleteOne({ employee_id: req.params.id });
+    let val = req.params.id;
 
-    if (result.deletedCount === 0) {
-      return res.status(404).json({
-        message: "Employee not found"
-      });
+    let result = await Employee.deleteOne({ employee_id: val });
+
+    if(result.deletedCount === 0){
+      return res.status(404).json("No employee found with id " + val);
     }
 
     res.json({
-      success: true,
-      message: "Employee deleted successfully"
+      employee_id: val,
+      message : "1 record has been deleted"
     });
 
   } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// ================= KEEP ALIVE (Render Free Tier Fix) =================
-setInterval(async () => {
-  try {
-    await fetch("https://restful-api-crud.onrender.com/employees");
-    console.log("Self ping success");
-  } catch (err) {
-    console.log("Ping failed");
-  }
-}, 1000 * 60 * 10); // every 10 min
-
-// ================= SERVER =================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log('Server started on port ' + PORT);
 });

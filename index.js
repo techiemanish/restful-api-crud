@@ -1,137 +1,196 @@
-// @Author : techiemanish
-var express = require('express');
+// @Author : techiemanish (Optimized Version)
+
+const express = require('express');
 require('dotenv').config();
-var app = express();
-var bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const path = require('path');
+const fetch = require('node-fetch');
 
-let resources = __dirname + "/public";
-app.use(bodyParser.urlencoded({ extended: false }));
+const app = express();
+
+// Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-let Handler = (req, res) => {
-  let absolutePath = __dirname + "/views/index.html";
-  res.sendFile(absolutePath);
-};
-app.get("/", Handler);
+// Static files
+app.use("/public", express.static(path.join(__dirname, "public")));
 
-app.use("/public", express.static(resources));
-
-app.listen(3000, () => {
-  console.log('Server started');
-  console.log('Application is live now');
+// Home route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "views/index.html"));
 });
 
-var mongoose = require('mongoose');
-mongoose.connect(process.env.MONGO_URI);
-var db = mongoose.connection;
+// ================= DB CONNECTION =================
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log("DB Error:", err));
 
-//Schema
-const Schema = mongoose.Schema;
-const employeeSchema = new Schema({
-  employee_name : String,
-  employee_salary : Number,
-  employee_age : Number
-});
-
-let Employee = mongoose.model('Employee', employeeSchema);
-
-//API Endpoints
-
-// Post request to the API(Creating record)
-app.post("/employees", function(req, res){
-  
-  var data = {
-    employee_id : req.body.employee_id,
-    employee_name : req.body.employee_name,
-    employee_salary : req.body.employee_salary,
-    employee_age : req.body.employee_age
+// ================= SCHEMA =================
+const employeeSchema = new mongoose.Schema({
+  employee_id: {
+    type: String,
+    required: [true, "Employee ID is required"],
+    unique: true,
+    trim: true
+  },
+  employee_name: {
+    type: String,
+    required: [true, "Employee name is required"],
+    trim: true,
+    validate: {
+      validator: v => isNaN(v),
+      message: "Name should not be numeric"
+    }
+  },
+  employee_salary: {
+    type: Number,
+    required: true,
+    min: [1000, "Salary too low"],
+    max: [10000000, "Salary too high"]
+  },
+  employee_age: {
+    type: Number,
+    required: true,
+    min: [18, "Minimum age is 18"],
+    max: [65, "Maximum age is 65"]
   }
-  db.collection('employees').insertOne(data, function(err, collection){
-    if(err) return console.log(err);
-    console.log("Record Save Successfully");
-  })
-  res.json({
-    employee_id : req.body.employee_id,
-    employee_name : req.body.employee_name,
-    employee_salary : req.body.employee_salary,
-    employee_age : req.body.employee_age
+}, { timestamps: true });
+
+const Employee = mongoose.model('Employee', employeeSchema);
+
+// ================= API ROUTES =================
+
+// CREATE
+app.post("/employees", async (req, res) => {
+  try {
+    const employee = new Employee(req.body);
+    const saved = await employee.save();
+
+    res.status(201).json({
+      success: true,
+      data: saved
     });
 
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      error: err.message
+    });
+  }
 });
 
-//Get request to the API(Reading all the records)
-app.get('/employees', (req, res) => {
-  db.collection('employees').find({},{ projection: 
-  {
-    _id : 0,
-    employee_id : 1,
-    employee_name : 1,
-    employee_salary : 1,
-    employee_age : 1
-  }}).toArray(function(err, result){
-    if(err) return console.log(err);
-    res.json(result);
-    //console.log(result);
-  });
+// READ ALL
+app.get("/employees", async (req, res) => {
+  try {
+    const employees = await Employee.find({}, {
+      _id: 0,
+      employee_id: 1,
+      employee_name: 1,
+      employee_salary: 1,
+      employee_age: 1
+    });
+
+    res.json({
+      count: employees.length,
+      data: employees
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
 });
 
-//To find a employee by id on the api call
-app.get('/employees/:id', function(req, res){
-  let val = req.params.id;
-  let result = db.collection('employees').findOne({employee_id : val},{ projection: 
-  {
-    _id : 0,
-    employee_id : 1,
-    employee_name : 1,
-    employee_salary : 1,
-    employee_age : 1
-  }});
-  result.then(function(result){
-    if(result == null){
-      res.json("No employee found with the given employee id " + val);
+// READ BY ID
+app.get("/employees/:id", async (req, res) => {
+  try {
+    const emp = await Employee.findOne(
+      { employee_id: req.params.id },
+      { _id: 0 }
+    );
+
+    if (!emp) {
+      return res.status(404).json({
+        message: "Employee not found"
+      });
     }
-    else{
-      res.json(result);
-    }
-    
-  });
+
+    res.json(emp);
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
 });
 
-//Put API request by id
-app.put('/employees/:id', function(req, res){
-  let val = req.params.id;
-  db.collection('employees').updateOne({employee_id : val},
-  {$set: 
-    {employee_id : req.body.employee_id,
-    employee_name : req.body.employee_name,
-    employee_salary : req.body.employee_salary,
-    employee_age : req.body.employee_age
-    }
-  },{upsert: true},function(err){
-    if(err){
-      return console.log(err);
-    }
-    console.log("Put request on this employee id " + val + " has been completed.");
-  });
-  res.json({
-    employee_id: req.body.employee_id,
-    employee_name : req.body.employee_name,
-    employee_salary : req.body.employee_salary,
-    employee_age : req.body.employee_age,
-    message : "1 record has been updated."
-  });
-})
+// UPDATE
+app.put("/employees/:id", async (req, res) => {
+  try {
+    const updated = await Employee.findOneAndUpdate(
+      { employee_id: req.params.id },
+      req.body,
+      { new: true, runValidators: true }
+    );
 
-//Delete API request by id on the api call
-app.delete('/employees/:id', function(req, res){
-  let val = req.params.id;
-  db.collection('employees').deleteOne({employee_id : val},function(err, obj){
-    if(err) return console.log(err);
-    console.log("1 record deleted");
-  })
-  res.json({
-    employee_id: req.params.id,
-    message : "1 record has been deleted"
-  });
+    if (!updated) {
+      return res.status(404).json({
+        message: "Employee not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: updated
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      error: err.message
+    });
+  }
 });
 
+// DELETE
+app.delete("/employees/:id", async (req, res) => {
+  try {
+    const result = await Employee.deleteOne({ employee_id: req.params.id });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        message: "Employee not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Employee deleted successfully"
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
+// ================= KEEP ALIVE (Render Free Tier Fix) =================
+setInterval(async () => {
+  try {
+    await fetch("https://restful-api-crud.onrender.com/employees");
+    console.log("Self ping success");
+  } catch (err) {
+    console.log("Ping failed");
+  }
+}, 1000 * 60 * 10); // every 10 min
+
+// ================= SERVER =================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
